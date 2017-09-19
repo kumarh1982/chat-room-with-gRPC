@@ -90,16 +90,16 @@ RegisterClient(ServerContext* context,
 	
 	string who = request->from();
 	unique_ptr<Client> c;
-	c->set_name(who);
+	c->mutable_name()->set_name(who);
 		
 	unique_ptr<ChatRoom> cr(c->add_chatroom());
 	// TO-DO : find next available port
 	int port;
 	pthread_t thread;
 	pthread_create(&thread, NULL, RunRoom, (void*)&port);
-	cr->set_owner(who);
-	cr->set_thread(thread);
-	cr->set_port(port);
+	cr->mutable_owner()->set_owner(who);
+	cr->mutable_thread()->set_thread(thread);
+	cr->mutable_port()->set_port(port);
 	
 	// cr->add_clients();
 	

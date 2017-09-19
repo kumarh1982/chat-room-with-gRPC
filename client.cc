@@ -20,7 +20,6 @@ using grpc::ClientWriter;
 using grpc::Status;
 using hw::Request;
 using hw::ChatRoom;
-using hw::MainServer;
 
 using namespace std;
 
@@ -36,23 +35,30 @@ class Client {
 	private:
 			unique_ptr<MainServer::Stub> serverStub;
 			vector<unique_ptr<RoomServer::Stub> > roomStubs;
+			string name;
+			ChatRoom owned;
 };
+
+void Client::RegisterClient(){
+	Request request;
+	ClientContext context;
+	
+	request.mutable_from()->set_from(this->name);
+	Stauts status = serverStub->RegisterClient(&context, request, &this->owned);
+	
+	if(!status.ok()) {
+		cout << "@Register Client rpc failed." << endl;
+	}
+}
 
 int main(int argc, char** argv){
 	Client client(
      grpc::CreateChannel("localhost:50051",
                 grpc::InsecureChannelCredentials())
 			);
+			
+	// command mode
 	
-
-/*
-  client.ListRoom();
-
-  client.JoinRoom();
-
-  client.LeaveRoom();
-
-  client.Chat();
-*/
+	
 	return 0;
 }
