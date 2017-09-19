@@ -7,3 +7,5 @@ protos/*.pb.h
 ./*.pb.h
 
 *~
+
+protos/*~
