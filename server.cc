@@ -113,9 +113,13 @@ Status
 MainServerImpl::
 ListRoom(ServerContext* context, 
 					const Request* request,
-					ServerWriter<ChatRoom>* response) {
+					ServerWriter<ChatRoom>* writer) {
 	// traverse the chat room databases
 	// identify the chat room owned by querying client
+	for(const auto& cr : this->chatRooms) {
+		writer->Write(cr);
+	}
+	return Status::OK;
 }
 
 Status
