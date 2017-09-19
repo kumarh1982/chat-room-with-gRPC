@@ -26,14 +26,16 @@ using namespace std;
 
 class Client {
 	public:
-		  Client(std::shared_ptr<Channel> channel)
-					: stub_(MainServer::NewStub(channel)){};
+		  Client(shared_ptr<Channel> channel)
+					: serverStub(MainServer::NewStub(channel)){};
+			void RegisterClient();
 			void ListRoom();
 			void JoinRoom();
 			void LeaveRoom();
 			void Chat();
 	private:
-			std::unique_ptr<MainServer::Stub> stub_;
+			unique_ptr<MainServer::Stub> serverStub;
+			vector<unique_ptr<RoomServer::Stub> > roomStubs;
 };
 
 int main(int argc, char** argv){
@@ -41,6 +43,8 @@ int main(int argc, char** argv){
      grpc::CreateChannel("localhost:50051",
                 grpc::InsecureChannelCredentials())
 			);
+	
+
 /*
   client.ListRoom();
 

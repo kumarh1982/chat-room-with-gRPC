@@ -2,16 +2,26 @@ syntax = "proto3";
 
 package hw;
 
-message ChatRoom {
+message Client {
 	string name = 1;
+	repeated ChatRoom chatRoom = 2;
+}
+
+message ChatRoom {
+	string owner = 1;
+	int32 thread = 2;   // thread id
+	int32 port = 3;
+	repeated Client clients = 4;
 }
 
 message Request {
-	string request = 1;
+	string from = 1;   // request from which client/room
+	string request = 2;
 }
 
 service MainServer {
-	rpc ListRoom(Request) returns (ChatRoom) {}
+	rpc RegisterClient(Request) returns (ChatRoom) {}
+	rpc ListRoom(Request) returns (stream ChatRoom) {}
 	rpc JoinRoom(Request) returns (Request) {}
 	rpc LeaveRoom(Request) returns (Request) {}
 	rpc Chat(Request) returns (Request) {}
