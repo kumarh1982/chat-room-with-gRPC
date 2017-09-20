@@ -4,14 +4,14 @@ package hw;
 
 message Client {
 	string name = 1;
-	repeated ChatRoom chatRoom = 2;  // joined chat rooms
+	repeated string chatRoom = 2;  // joined chat rooms
 }
 
 message ChatRoom {
 	string owner = 1;
 	int32 thread = 2;   // thread id
 	int32 port = 3;
-	repeated Client clients = 4;
+	repeated string clients = 4;
 }
 
 message Request {
