@@ -12,7 +12,7 @@
 #include <grpc++/security/credentials.h>
 #include "main.grpc.pb.h"
 
-#define DEBUG;
+#define DEBUG
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -22,13 +22,15 @@ using grpc::ClientWriter;
 using grpc::Status;
 using hw::Request;
 using hw::ChatRoom;
+using hw::MainServer;
+using hw::RoomServer;
 
 using namespace std;
 
 class Client {
 	public:
-		  Client(shared_ptr<Channel> channel)
-					: serverStub(MainServer::NewStub(channel)){};
+		  Client(shared_ptr<Channel> channel, string& n)
+					: serverStub(MainServer::NewStub(channel)), name(n) {};
 			void RegisterClient();
 			void ListRoom();
 			void JoinRoom();
@@ -47,18 +49,22 @@ void Client::RegisterClient(){
 	Request request;
 	ClientContext context;
 	
-	request.mutable_from()->set_from(this->name);
-	Stauts status = serverStub ->RegisterClient(&context, request, &this->owned);
-	
+	request.set_from(this->name);
+	Status status = serverStub->RegisterClient(&context, request, &this->owned);
 	if(!status.ok()) {
 		cout << "@Register Client rpc failed." << endl;
+	}
+	else {
+		cout << "@Register Client rpc succeeded." << endl;
 	}
 }
 
 int main(int argc, char** argv){
+
+	string name = "test";
 	Client client(
      grpc::CreateChannel("localhost:50051",
-                grpc::InsecureChannelCredentials())
+                grpc::InsecureChannelCredentials()), name
 			);
 #ifdef DEBUG
 	cout << "successfully connected to the main server" << endl;
@@ -66,7 +72,7 @@ int main(int argc, char** argv){
 
 	client.RegisterClient();			
 	// command mode
-	
+	// client.ListRoom();
 	
 	return 0;
 }

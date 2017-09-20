@@ -4,6 +4,7 @@
 #include <memory>
 #include <pthread.h>
 
+
 #include <grpc/grpc.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
@@ -33,7 +34,10 @@ void* RunRoom(void* param);
 class MainServerImpl final : public MainServer::Service {
 	public:
 
-		MainServerImpl(){;}
+		MainServerImpl();
+		~MainServerImpl() {
+			for(auto& n : clients) delete n.second;
+		}
 		
 		Status RegisterClient(ServerContext* context, const Request* request,
 												ChatRoom* response) override;
@@ -41,26 +45,27 @@ class MainServerImpl final : public MainServer::Service {
 		Status ListRoom(ServerContext* context, const Request* request,
 										ServerWriter<ChatRoom>* response) override;
 		Status JoinRoom(ServerContext* context, const Request* request,
-										Request* response) override{;}
+										Request* response) override;
 		Status LeaveRoom(ServerContext* context, const Request* request,
-										Request* response) override{;}
+										Request* response) override;
 		Status Chat(ServerContext* context, const Request* request,
-								Request* response) override{;}
+								Request* response) override;
 								
 	private:
 	
-		map<string, unique_ptr<ChatRoom> > chatRooms;
-		map<string, unique_ptr<Client> > clients;
+		map<string, ChatRoom*> chatRooms;
+		map<string, Client*> clients;
 };
 
 class RoomServerImpl final : public RoomServer::Service{
 	public:
-		RoomServerImpl();
-		Status Chat(ServerContext* context, 
-								ServerReaderWriter<Request, Request>* stream) override;
+		explicit RoomServerImpl(ChatRoom* cr) : chatRoom(cr){}
+		
+	//	Status Chat(ServerContext* context, 
+	//							ServerReaderWriter<Request, Request>* stream) override;
 	private:
-		void WriteToFile();
-		unique_ptr<ChatRoom> chatRoom;
+		//void WriteToFile();
+		ChatRoom* chatRoom;
 };
 
 /*--------------------------------Main Server---------------------------------*/
@@ -77,6 +82,13 @@ void RunServer(){
 	server->Wait();
 }
 
+MainServerImpl::
+MainServerImpl() {
+	chatRooms.clear();
+	clients.clear();
+}
+
+
 Status
 MainServerImpl::
 RegisterClient(ServerContext* context,
@@ -89,24 +101,24 @@ RegisterClient(ServerContext* context,
 	// run the chat room server
 	
 	string who = request->from();
-	unique_ptr<Client> c;
-	c->mutable_name()->set_name(who);
+	Client* c = new Client;
+	c->set_name(who);
 		
-	unique_ptr<ChatRoom> cr(c->add_chatroom());
+	ChatRoom* cr = c->add_chatroom();
+	cr->set_owner(who);
 	// TO-DO : find next available port
-	int port;
+	int port = 5001;
+	cr->set_port(port);
 	pthread_t thread;
-	pthread_create(&thread, NULL, RunRoom, (void*)&port);
-	cr->mutable_owner()->set_owner(who);
-	cr->mutable_thread()->set_thread(thread);
-	cr->mutable_port()->set_port(port);
-	
+	pthread_create(&thread, NULL, RunRoom, (void*)cr);
+	cr->set_thread(thread);
 	// cr->add_clients();
-	
+	cout << "owner is " << cr->owner() << endl;
 	this->clients.insert(make_pair(who, c));
 	this->chatRooms.insert(make_pair(who, cr));
 	
 	response = cr;
+	return Status::OK;
 }
 
 Status
@@ -117,7 +129,7 @@ ListRoom(ServerContext* context,
 	// traverse the chat room databases
 	// identify the chat room owned by querying client
 	for(const auto& cr : this->chatRooms) {
-		writer->Write(cr);
+		writer->Write(*cr.second);
 	}
 	return Status::OK;
 }
@@ -128,6 +140,7 @@ JoinRoom(ServerContext* context,
 				 const Request* request,
 					Request* response) {
 	// add client to chat room list
+	;
 }
 
 Status
@@ -135,7 +148,7 @@ MainServerImpl::
 LeaveRoom(ServerContext* context,
 					const Request* request,
 					Request* response) {
-										
+								;		
 }
 
 Status
@@ -143,25 +156,28 @@ MainServerImpl::
 Chat(ServerContext* context,
 		 const Request* request,
 			Request* response) {
-								
+					;			
 }
 
 /*------------------------------------Chat Room Server------------------------------------------*/
 
 void* RunRoom(void* param) {
 	// TO-DO: find next available port
-	int* o = (int*)param;
-	int port = *o;
-	string server_address("localhost:50051");
-	RoomServerImpl service;
+	ChatRoom* cr = (ChatRoom*)param;
+	int port = cr->port();
+	cout << "port num " << port << endl;
+	cout << "owner is 2 " << cr->owner() << endl;
+	string server_address("localhost:5001");
+	RoomServerImpl service(cr);
 	
   ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Chat Room listening on " << server_address << std::endl;
+  std::cout << "Chat Room " << cr->owner() <<"listening on " << server_address << std::endl;
 	server->Wait();
 }
+
 
 int main(int argc, char** argv){
 	RunServer();
