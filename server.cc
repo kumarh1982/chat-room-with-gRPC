@@ -111,6 +111,7 @@ RegisterClient(ServerContext* context,
 	cr->set_port(port);
 	pthread_t thread;
 	pthread_create(&thread, NULL, RunRoom, (void*)cr);
+	// TO-DO : thread id and int 32, type conversion is wrong
 	cr->set_thread(thread);
 	// cr->add_clients();
 	
@@ -172,7 +173,7 @@ void* RunRoom(void* param) {
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Chat Room " << cr->owner() <<"listening on " << server_address << std::endl;
+  std::cout << "Chat Room " << cr->owner() <<" listening on " << server_address << std::endl;
 	server->Wait();
 }
 
