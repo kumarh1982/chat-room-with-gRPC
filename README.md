@@ -20,3 +20,9 @@
 
   ./server <br>
   ./client username
+
+* unresolved problems yet
+<ol>
+  <li>thread ID is negative in console : thread_t type to int 32 conversion</li>
+  <li>find next available port for new chat room</li>
+</ol>
