@@ -15,7 +15,8 @@
 
 * to execute
 
-  <br> note: there will be some parameter passed to program, username, port num, etc later
+  <br> note: there will be other parameters passed to program, port num, etc later
+  <br> for now it's just username
 
   ./server <br>
-  ./client
+  ./client username
