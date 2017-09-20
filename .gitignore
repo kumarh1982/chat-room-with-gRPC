@@ -2,9 +2,11 @@ protos/*.pb.cc
 
 protos/*.pb.h
 
-./*.pb.cc
+*.pb.cc
 
-./*.pb.h
+*.pb.h
+
+*.o
 
 *~
 
