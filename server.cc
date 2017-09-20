@@ -129,8 +129,15 @@ ListRoom(ServerContext* context,
 					ServerWriter<ChatRoom>* writer) {
 	// traverse the chat room databases
 	// identify the chat room owned by querying client
-	for(const auto& cr : this->chatRooms) {
-		writer->Write(*cr.second);
+	if(request->request() == "ALL")
+		for(const auto& cr : this->chatRooms)
+			writer->Write(*cr.second);
+	else if(request->request() == "JOINED") {
+		string who = request->from();
+		Client* c = clients[who];
+		int size = c->chatroom_size();
+		for(int i = 0; i < size; i++)
+			writer->Write(c->chatroom(i));
 	}
 	return Status::OK;
 }

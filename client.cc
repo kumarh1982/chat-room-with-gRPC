@@ -33,6 +33,8 @@ class Client {
 					: serverStub(MainServer::NewStub(channel)), name(n) {};
 			void RegisterClient();
 			void ListRoom();
+			void ListAll();
+			void ListJoined();
 			void JoinRoom();
 			void LeaveRoom();
 			void Chat();
@@ -55,24 +57,56 @@ void Client::RegisterClient(){
 		cout << "@Register Client rpc failed." << endl;
 }
 
-void Client::ListRoom() {
+void Client::ListAll() {
 	Request request;
+	string r = "ALL";
 	ClientContext context;
 	ChatRoom cr;
 	
 	request.set_from(this->name);
+	request.set_request(r);
 	unique_ptr<ClientReader<ChatRoom> > reader(
 		serverStub->ListRoom(&context, request));
-	while(reader->Read(&cr)) this->PrintRoom(cr);
+	while(reader->Read(&cr)) {
+		cout << "---------------all rooms---------------" << endl;
+		this->PrintRoom(cr);
+		cout << "---------------------------------------" << endl;		
+	}
 	Status status = reader->Finish();
 	if(!status.ok()) 
 		cout << "@ListRoom rpc failed." << endl;
 }
 
+void Client::ListJoined() {
+	Request request;
+	string r = "JOINED";
+	ClientContext context;
+	ChatRoom cr;
+	
+	request.set_from(this->name);
+	request.set_request(r);
+	unique_ptr<ClientReader<ChatRoom> > reader(
+		serverStub->ListRoom(&context, request));
+	while(reader->Read(&cr)) {
+		cout << "--------------joined rooms--------------" << endl;
+		this->PrintRoom(cr);
+		cout << "----------------------------------------" << endl;		
+	}
+	Status status = reader->Finish();
+	if(!status.ok()) 
+		cout << "@ListRoom rpc failed." << endl;
+}
+
+void Client::ListRoom() {
+	this->ListAll();
+	this->ListJoined();
+}
+
 void Client::PrintRoom(ChatRoom& cr) {
-	cout << "chat room port: " << cr.port()
-				<< " ,owner: " << cr.owner()
-				<< " ,thread: " << cr.thread()
+
+	cout << "chat room -> port:" << cr.port()
+				<< " | owner: " << cr.owner()
+				<< " | thread: " << cr.thread()
 				<< endl;
 }
 
