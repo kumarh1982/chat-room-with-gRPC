@@ -54,9 +54,6 @@ void Client::RegisterClient(){
 	if(!status.ok()) {
 		cout << "@Register Client rpc failed." << endl;
 	}
-	else {
-		cout << "@Register Client rpc succeeded." << endl;
-	}
 }
 
 int main(int argc, char** argv){

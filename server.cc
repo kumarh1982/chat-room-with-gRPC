@@ -113,7 +113,7 @@ RegisterClient(ServerContext* context,
 	pthread_create(&thread, NULL, RunRoom, (void*)cr);
 	cr->set_thread(thread);
 	// cr->add_clients();
-	cout << "owner is " << cr->owner() << endl;
+	
 	this->clients.insert(make_pair(who, c));
 	this->chatRooms.insert(make_pair(who, cr));
 	
@@ -165,8 +165,6 @@ void* RunRoom(void* param) {
 	// TO-DO: find next available port
 	ChatRoom* cr = (ChatRoom*)param;
 	int port = cr->port();
-	cout << "port num " << port << endl;
-	cout << "owner is 2 " << cr->owner() << endl;
 	string server_address("localhost:5001");
 	RoomServerImpl service(cr);
 	
