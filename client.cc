@@ -4,6 +4,7 @@
 #include <random>
 #include <string>
 #include <thread>
+#include <sstream>
 
 #include <grpc/grpc.h>
 #include <grpc++/channel.h>
@@ -27,6 +28,8 @@ using hw::RoomServer;
 
 using namespace std;
 
+vector<string> stringSpliter(string& s);
+
 class Client {
 	public:
 		  Client(shared_ptr<Channel> channel, string& n)
@@ -35,8 +38,8 @@ class Client {
 			void ListRoom();
 			void ListAll();
 			void ListJoined();
-			void JoinRoom();
-			void LeaveRoom();
+			void JoinRoom(string& r);
+			void LeaveRoom(string& r);
 			void Chat();
 			void PrintRoom(ChatRoom& cr);
 			void PrintChat();
@@ -67,11 +70,11 @@ void Client::ListAll() {
 	request.set_request(r);
 	unique_ptr<ClientReader<ChatRoom> > reader(
 		serverStub->ListRoom(&context, request));
+	cout << "---------------all rooms---------------" << endl;
 	while(reader->Read(&cr)) {
-		cout << "---------------all rooms---------------" << endl;
 		this->PrintRoom(cr);
-		cout << "---------------------------------------" << endl;		
 	}
+	cout << "---------------------------------------" << endl;		
 	Status status = reader->Finish();
 	if(!status.ok()) 
 		cout << "@ListRoom rpc failed." << endl;
@@ -87,11 +90,11 @@ void Client::ListJoined() {
 	request.set_request(r);
 	unique_ptr<ClientReader<ChatRoom> > reader(
 		serverStub->ListRoom(&context, request));
+	cout << "--------------joined rooms--------------" << endl;
 	while(reader->Read(&cr)) {
-		cout << "--------------joined rooms--------------" << endl;
 		this->PrintRoom(cr);
-		cout << "----------------------------------------" << endl;		
 	}
+	cout << "----------------------------------------" << endl;		
 	Status status = reader->Finish();
 	if(!status.ok()) 
 		cout << "@ListRoom rpc failed." << endl;
@@ -100,6 +103,18 @@ void Client::ListJoined() {
 void Client::ListRoom() {
 	this->ListAll();
 	this->ListJoined();
+}
+
+void Client::JoinRoom(string& r) {
+	ClientContext context;
+	Request request, response;
+	request.set_from(this->name);
+	request.set_request(r);
+	Status status = serverStub->JoinRoom(&context, request, &response);
+	if(!status.ok())
+		cout << "@JoinRoom rpc failed." << endl;
+	else
+		cout << response.request() << endl;
 }
 
 void Client::PrintRoom(ChatRoom& cr) {
@@ -115,16 +130,28 @@ void CommandMode(Client& c) {
 		cout << "Please enter a request below." << endl;
 		string request;
 		getline(cin, request);
+		vector<string> splited = stringSpliter(request);
 		if(request == "CHAT") return;
 		else if(request == "LIST") c.ListRoom();
+		else if(splited.front() == "JOIN") c.JoinRoom(splited.front());
+		//else if(splited.front() == "LEAVE") c.LeaveRoom(splited.front());
+		else if(request == "quit") exit(0);
 		else
 			cout << "@Unrecognized command, please reenter." << endl;
 	}
 }
 
+vector<string> stringSpliter(string& s) {
+	stringstream ss(s);
+	vector<string> res;
+	string item;
+	while(getline(ss, item, ' ')) res.push_back(item);
+	return res;
+}
+
 int main(int argc, char** argv){
 
-	string name = "test";
+	string name(argv[1]);
 	Client client(
      grpc::CreateChannel("localhost:50051",
                 grpc::InsecureChannelCredentials()), name

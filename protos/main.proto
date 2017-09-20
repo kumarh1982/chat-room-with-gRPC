@@ -4,7 +4,7 @@ package hw;
 
 message Client {
 	string name = 1;
-	repeated string chatRoom = 2;  // joined chat rooms
+	repeated string chatRooms = 2;  // joined chat rooms
 }
 
 message ChatRoom {

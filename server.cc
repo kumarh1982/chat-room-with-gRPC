@@ -101,24 +101,32 @@ RegisterClient(ServerContext* context,
 	// run the chat room server
 	
 	string who = request->from();
-	Client* c = new Client;
-	c->set_name(who);
+	
+	if(clients.find(who) == clients.end()){  // new client
+		Client* c = new Client;
+		c->set_name(who);
+		c->add_chatrooms(who);
 		
-	ChatRoom* cr = c->add_chatroom();
-	cr->set_owner(who);
-	// TO-DO : find next available port
-	int port = 5001;
-	cr->set_port(port);
-	pthread_t thread;
-	pthread_create(&thread, NULL, RunRoom, (void*)cr);
-	// TO-DO : thread id and int 32, type conversion is wrong
-	cr->set_thread(thread);
-	// cr->add_clients();
+		ChatRoom* cr = new ChatRoom;
+		cr->set_owner(who);
+		// TO-DO : find next available port
+		int port = 5001;
+		cr->set_port(port);
+		cr->add_clients(who);
+		pthread_t thread;
+		pthread_create(&thread, NULL, RunRoom, (void*)cr);
+		// TO-DO : thread id and int 32, type conversion is wrong
+		cr->set_thread(thread);
+		// cr->add_clients();
 	
-	this->clients.insert(make_pair(who, c));
-	this->chatRooms.insert(make_pair(who, cr));
+		this->clients.insert(make_pair(who, c));
+		this->chatRooms.insert(make_pair(who, cr));
 	
-	response = cr;
+		response = cr;
+	}
+	else {  // old client logs back in
+		response = chatRooms[who];
+	}
 	return Status::OK;
 }
 
@@ -135,9 +143,11 @@ ListRoom(ServerContext* context,
 	else if(request->request() == "JOINED") {
 		string who = request->from();
 		Client* c = clients[who];
-		int size = c->chatroom_size();
-		for(int i = 0; i < size; i++)
-			writer->Write(c->chatroom(i));
+		int size = c->chatrooms_size();
+		for(int i = 0; i < size; i++) {
+			string name = c->chatrooms(i);
+			writer->Write(*chatRooms[name]);
+		}
 	}
 	return Status::OK;
 }
@@ -148,7 +158,15 @@ JoinRoom(ServerContext* context,
 				 const Request* request,
 					Request* response) {
 	// add client to chat room list
-	;
+	string who = request->from();
+	string room = request->request();
+	if(chatRooms.find(room) == chatRooms.end()) { // room does not exist
+		string r = "@Room " + room + " does not exist";
+		response->set_request(r);
+	}
+	else { // update database
+		
+	}
 }
 
 Status
