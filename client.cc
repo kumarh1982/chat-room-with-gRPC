@@ -50,10 +50,25 @@ class Client {
 			ChatRoom owned;
 };
 
+void Client::Chat(){
+        // TODO
+        // retrieve the last 20 chats from all joined rooms
+        Request request, response;
+        ClientContext context;
+
+        request.set_from(this->name);
+        Status status = serverStub->Chat(&context, request, &response);
+        if(!status.ok())
+            cout << "@Chat request rpc failed." << endl;
+        else{
+
+        }
+}
+
 void Client::RegisterClient(){
 	Request request;
 	ClientContext context;
-	
+
 	request.set_from(this->name);
 	Status status = serverStub->RegisterClient(&context, request, &this->owned);
 	if(!status.ok())
@@ -65,7 +80,7 @@ void Client::ListAll() {
 	string r = "ALL";
 	ClientContext context;
 	ChatRoom cr;
-	
+
 	request.set_from(this->name);
 	request.set_request(r);
 	unique_ptr<ClientReader<ChatRoom> > reader(
@@ -74,9 +89,9 @@ void Client::ListAll() {
 	while(reader->Read(&cr)) {
 		this->PrintRoom(cr);
 	}
-	cout << "---------------------------------------" << endl;		
+	cout << "---------------------------------------" << endl;
 	Status status = reader->Finish();
-	if(!status.ok()) 
+	if(!status.ok())
 		cout << "@ListRoom rpc failed." << endl;
 }
 
@@ -85,7 +100,7 @@ void Client::ListJoined() {
 	string r = "JOINED";
 	ClientContext context;
 	ChatRoom cr;
-	
+
 	request.set_from(this->name);
 	request.set_request(r);
 	unique_ptr<ClientReader<ChatRoom> > reader(
@@ -94,9 +109,9 @@ void Client::ListJoined() {
 	while(reader->Read(&cr)) {
 		this->PrintRoom(cr);
 	}
-	cout << "----------------------------------------" << endl;		
+	cout << "----------------------------------------" << endl;
 	Status status = reader->Finish();
-	if(!status.ok()) 
+	if(!status.ok())
 		cout << "@ListRoom rpc failed." << endl;
 }
 
@@ -106,6 +121,9 @@ void Client::ListRoom() {
 }
 
 void Client::JoinRoom(string& r) {
+        // send request to mainserver to get the port number of chat room to
+        // join, then establish rpc connection with the chat room and store it
+        // in roomsstub list
 	ClientContext context;
 	Request request, response;
 	request.set_from(this->name);
@@ -113,8 +131,15 @@ void Client::JoinRoom(string& r) {
 	Status status = serverStub->JoinRoom(&context, request, &response);
 	if(!status.ok())
 		cout << "@JoinRoom rpc failed." << endl;
-	else
-		cout << response.request() << endl;
+	else{
+                string responseStr = response.request();
+		cout << responseStr << endl;
+                vector<string> splited = stringSpliter(responseStr);
+                string addr_str = splited.back();
+                // establish a bidirectional streaming roomstub?
+                RoomServerStub roomStub(grpc::CreateChannel(addr_str,
+                      grpc::InsecureChannelCredentials()), )
+        }
 }
 
 void Client::PrintRoom(ChatRoom& cr) {
@@ -133,7 +158,7 @@ void CommandMode(Client& c) {
 		vector<string> splited = stringSpliter(request);
 		if(request == "CHAT") return;
 		else if(request == "LIST") c.ListRoom();
-		else if(splited.front() == "JOIN") c.JoinRoom(splited.front());
+		else if(splited.front() == "JOIN") c.JoinRoom(splited.back());
 		//else if(splited.front() == "LEAVE") c.LeaveRoom(splited.front());
 		else if(request == "quit") exit(0);
 		else
@@ -160,10 +185,10 @@ int main(int argc, char** argv){
 	cout << "successfully connected to the main server" << endl;
 #endif
 	client.RegisterClient();
-			
+
 	// command mode
-	
+
 	CommandMode(client);
-	
+
 	return 0;
 }
