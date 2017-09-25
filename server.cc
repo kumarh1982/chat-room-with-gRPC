@@ -38,10 +38,10 @@ class MainServerImpl final : public MainServer::Service {
 		~MainServerImpl() {
 			for(auto& n : clients) delete n.second;
 		}
-
+		
 		Status RegisterClient(ServerContext* context, const Request* request,
 												ChatRoom* response) override;
-
+		
 		Status ListRoom(ServerContext* context, const Request* request,
 										ServerWriter<ChatRoom>* response) override;
 		Status JoinRoom(ServerContext* context, const Request* request,
@@ -50,9 +50,9 @@ class MainServerImpl final : public MainServer::Service {
 										Request* response) override;
 		Status Chat(ServerContext* context, const Request* request,
 								Request* response) override;
-
+								
 	private:
-
+	
 		map<string, ChatRoom*> chatRooms;
 		map<string, Client*> clients;
 };
@@ -60,8 +60,8 @@ class MainServerImpl final : public MainServer::Service {
 class RoomServerImpl final : public RoomServer::Service{
 	public:
 		explicit RoomServerImpl(ChatRoom* cr) : chatRoom(cr){}
-
-	//	Status Chat(ServerContext* context,
+		
+	//	Status Chat(ServerContext* context, 
 	//							ServerReaderWriter<Request, Request>* stream) override;
 	private:
 		//void WriteToFile();
@@ -73,7 +73,7 @@ class RoomServerImpl final : public RoomServer::Service{
 void RunServer(){
 	string server_address("localhost:50051");
 	MainServerImpl service;
-
+	
   ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
@@ -94,19 +94,19 @@ MainServerImpl::
 RegisterClient(ServerContext* context,
 							 const Request* request,
 								ChatRoom* response) {
-	// identify the client name from request
+	// identify the client name from request	
 	// update client database
 	// create a chat room thread owned by client
 	// update chatroom database
 	// run the chat room server
-
+	
 	string who = request->from();
-
+	
 	if(clients.find(who) == clients.end()){  // new client
 		Client* c = new Client;
 		c->set_name(who);
 		c->add_chatrooms(who);
-
+		
 		ChatRoom* cr = new ChatRoom;
 		cr->set_owner(who);
 		// TO-DO : find next available port
@@ -118,10 +118,10 @@ RegisterClient(ServerContext* context,
 		// TO-DO : thread id and int 32, type conversion is wrong
 		cr->set_thread(thread);
 		// cr->add_clients();
-
+	
 		this->clients.insert(make_pair(who, c));
 		this->chatRooms.insert(make_pair(who, cr));
-
+	
 		response = cr;
 	}
 	else {  // old client logs back in
@@ -132,7 +132,7 @@ RegisterClient(ServerContext* context,
 
 Status
 MainServerImpl::
-ListRoom(ServerContext* context,
+ListRoom(ServerContext* context, 
 					const Request* request,
 					ServerWriter<ChatRoom>* writer) {
 	// traverse the chat room databases
@@ -160,25 +160,12 @@ JoinRoom(ServerContext* context,
 	// add client to chat room list
 	string who = request->from();
 	string room = request->request();
-
-        //cout << room << " to find." << endl;
-
-        auto itr = chatRooms.find(room);
-	if(itr == chatRooms.end()) { // room does not exist
+	if(chatRooms.find(room) == chatRooms.end()) { // room does not exist
 		string r = "@Room " + room + " does not exist";
 		response->set_request(r);
-                return Status::CANCELLED;
 	}
 	else { // update database
-                // get the chatroom object
-                ChatRoom* cr = itr->second;
-                // add the request client to clients list
-                cr->add_clients(who);
-                // TODO localhost
-                // send the room server info to client
-                string r = "Join room at localhost:" + to_string(cr->port());
-                response->set_request(r);
-                return Status::OK;
+		
 	}
 }
 
@@ -187,7 +174,7 @@ MainServerImpl::
 LeaveRoom(ServerContext* context,
 					const Request* request,
 					Request* response) {
-								;
+								;		
 }
 
 Status
@@ -195,7 +182,7 @@ MainServerImpl::
 Chat(ServerContext* context,
 		 const Request* request,
 			Request* response) {
-					;
+					;			
 }
 
 /*------------------------------------Chat Room Server------------------------------------------*/
@@ -206,7 +193,7 @@ void* RunRoom(void* param) {
 	int port = cr->port();
 	string server_address("localhost:5001");
 	RoomServerImpl service(cr);
-
+	
   ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
