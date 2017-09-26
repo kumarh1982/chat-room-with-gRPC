@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <ctime>
 
 #include <grpc/grpc.h>
 #include <grpc++/channel.h>
@@ -32,9 +33,6 @@ using google::protobuf::Timestamp;
 using namespace std;
 
 vector<string> stringSpliter(string& s);
-
-void PullChat(std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > reader) {
-}
 
 class Client {
 public:
@@ -77,9 +75,17 @@ void Client::Chat() {
 		ClientContext context;
 		ChatMsg chat;
 		while (stream->Read(&chat)) {
-		  auto time_sec = chat.timestamp();
-		  cout << ">>>ChatRoom: " << chat.room() << "\tMsg:" << chat.msg() << "\t" 
-        << google::protobuf::util::TimeUtil::ToString(time_sec) << endl;
+		  auto time = chat.timestamp();
+      time_t time_utc = time.seconds();
+      struct tm* local_tm;
+      // from utc time_t to local tm
+      local_tm = localtime(&time_utc);
+      char buf[30];
+      strftime(buf, 30, "%Y-%m-%dT%H:%M:%S %Z", local_tm);
+
+      cout << ">>>ChatRoom: " << chat.room() << "\tMsg:" << chat.msg() << "\t"
+        << buf << endl;
+      //  << google::protobuf::util::TimeUtil::ToString(time) << endl;
 		}
   });
   // collects input from command line to chat
@@ -91,6 +97,7 @@ void Client::Chat() {
 
     Timestamp timestamp;
     timestamp = google::protobuf::util::TimeUtil::GetCurrentTime();
+
     msg.set_allocated_timestamp(&timestamp);
 
     stream->Write(msg);
