@@ -42,12 +42,18 @@ void PullChat(std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > reader) {
     //<< google::protobuf::util::TimeUtil::ToString(time_sec) << endl;
   }
 
-  Status status = reader->Finish();
-  if (status.ok()) {
-    cout << "PullChat rpc succeeded." << endl;
-  }
-  else {
-    cout << "PullChat rpc failed." << endl;
+  Status status = reader->Finish();
+
+  if (status.ok()) {
+
+    cout << "PullChat rpc succeeded." << endl;
+
+  }
+
+  else {
+
+    cout << "PullChat rpc failed." << endl;
+
   }
 }
 
@@ -78,7 +84,8 @@ void Client::Chat() {
   ChatMsg msg;
 
   // start a push stream
-  std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > stream(
+  std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > stream(
+
     serverStub->Chat(&context));
   // send start chat to server
   msg.set_init(true);
@@ -93,9 +100,11 @@ void Client::Chat() {
   while (getline(cin, input)) {
     msg.set_msg(input);
     msg.set_from(this->name);
+    msg.set_init(false);
+    Timestamp timestamp;
 
-    Timestamp timestamp;
-    timestamp.set_seconds(time(NULL));
+    timestamp.set_seconds(time(NULL));
+
     timestamp.set_nanos(0);
     msg.set_allocated_timestamp(&timestamp);
 
