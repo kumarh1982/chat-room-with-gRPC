@@ -34,27 +34,6 @@ using namespace std;
 vector<string> stringSpliter(string& s);
 
 void PullChat(std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > reader) {
-  ClientContext context;
-  ChatMsg chat;
-  while (reader->Read(&chat)) {
-    auto time_sec = chat.timestamp();
-    cout << "ChatRoom: " << chat.room() << "\tMsg:" << chat.msg() << "\t" << endl;
-    //<< google::protobuf::util::TimeUtil::ToString(time_sec) << endl;
-  }
-
-  Status status = reader->Finish();
-
-  if (status.ok()) {
-
-    cout << "PullChat rpc succeeded." << endl;
-
-  }
-
-  else {
-
-    cout << "PullChat rpc failed." << endl;
-
-  }
 }
 
 class Client {
@@ -84,7 +63,7 @@ void Client::Chat() {
   ChatMsg msg;
 
   // start a push stream
-  std::shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > stream(
+  shared_ptr<ClientReaderWriter<ChatMsg, ChatMsg> > stream(
 
     serverStub->Chat(&context));
   // send start chat to server
@@ -94,7 +73,30 @@ void Client::Chat() {
   stream->Write(msg);
 
   // open a new thread to pull chats from server
-  thread pull_thread(PullChat, stream);
+  thread pull_thread([&](){
+		ClientContext context;
+		ChatMsg chat;
+		while (stream->Read(&chat)) {
+		  auto time_sec = chat.timestamp();
+		  cout << "ChatRoom: " << chat.room() << "\tMsg:" << chat.msg() << "\t" << endl;
+		  //<< google::protobuf::util::TimeUtil::ToString(time_sec) << endl;
+		}
+
+		Status status = stream->Finish();
+
+		if (status.ok()) {
+
+		  cout << "PullChat rpc succeeded." << endl;
+
+		}
+
+		else {
+
+		  cout << "PullChat rpc failed." << endl;
+
+		}
+
+  });
   // collects input from command line to chat
   string input;
   while (getline(cin, input)) {
