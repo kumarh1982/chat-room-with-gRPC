@@ -1,0 +1,35 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+package hw;
+
+message Client {
+	string name = 1;
+	map<string, bool> chatRooms = 2;  // joined chat rooms
+}
+
+message ChatRoom {
+	string owner = 1;
+	map<string, bool> clients = 2;
+}
+
+message Request {
+	string from = 1;   // request from which client/room
+	string request = 2;
+}
+
+message ChatMsg {
+	google.protobuf.Timestamp timestamp = 1;
+	string from = 2;   // from which client
+	string msg = 3;
+	string room = 4;
+	bool init = 5;     // for client init chat
+	bool finished = 6; // for server to notify the finish writing
+}
+
+service MainServer {
+	rpc RegisterClient(Request) returns (ChatRoom) {}
+	rpc ListRoom(Request) returns (stream ChatRoom) {}
+	rpc JoinRoom(Request) returns (Request) {}
+	rpc LeaveRoom(Request) returns (Request) {}
+	rpc Chat(stream ChatMsg) returns (stream ChatMsg) {}
+}
