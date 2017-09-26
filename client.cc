@@ -77,25 +77,10 @@ void Client::Chat() {
 		ClientContext context;
 		ChatMsg chat;
 		while (stream->Read(&chat)) {
-		  auto time_sec = chat.timestamp();
+		 // auto time_sec = chat.timestamp();
 		  cout << "ChatRoom: " << chat.room() << "\tMsg:" << chat.msg() << "\t" << endl;
 		  //<< google::protobuf::util::TimeUtil::ToString(time_sec) << endl;
 		}
-
-		Status status = stream->Finish();
-
-		if (status.ok()) {
-
-		  cout << "PullChat rpc succeeded." << endl;
-
-		}
-
-		else {
-
-		  cout << "PullChat rpc failed." << endl;
-
-		}
-
   });
   // collects input from command line to chat
   string input;
@@ -103,15 +88,21 @@ void Client::Chat() {
     msg.set_msg(input);
     msg.set_from(this->name);
     msg.set_init(false);
-    Timestamp timestamp;
+   // Timestamp timestamp;
 
-    timestamp.set_seconds(time(NULL));
+   // timestamp.set_seconds(time(NULL));
 
-    timestamp.set_nanos(0);
-    msg.set_allocated_timestamp(&timestamp);
+   // timestamp.set_nanos(0);
+   // msg.set_allocated_timestamp(&timestamp);
 
     stream->Write(msg);
   }
+  	pull_thread.join();
+	Status status = stream->Finish();
+	if(!status.ok()) {
+		cout << "Chat rpc failed." << endl;
+	}						
+
 }
 
 void Client::RegisterClient() {
